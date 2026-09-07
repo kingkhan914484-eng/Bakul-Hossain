@@ -1,0 +1,6 @@
+{
+  "name": "BM Emergency Global 24 HS",
+  "description": "One Tap Emergency Help - Verified Emergency Directory",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

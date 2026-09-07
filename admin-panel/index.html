@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BM Emergency Global 24 HS — Secure Admin Panel</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+
+  <!-- AUTHENTICATION SCREEN -->
+  <div id="login-view" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo-badge">🆘</div>
+        <h2>BM Emergency Global 24 HS</h2>
+        <p class="auth-subtitle">Secure Emergency Directory Operations</p>
+      </div>
+
+      <div id="login-error" class="alert alert-danger" style="display: none;"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-email">Administrator Email</label>
+          <input type="email" id="admin-email" class="form-control" placeholder="admin@bmemergency.org" required value="admin@bmemergency.org">
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Secure Password / Token</label>
+          <input type="password" id="admin-password" class="form-control" placeholder="••••••••••••" required value="Admin@24hsEmergency!">
+        </div>
+        <div class="form-group form-check">
+          <input type="checkbox" id="auth-2fa" checked required>
+          <label for="auth-2fa">Confirm authorized security token & session</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-login">
+          Authenticate & Enter Dashboard
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>🔒 Restricted Access: Authorized Personnel Only.</p>
+        <p class="text-muted text-xs">All IP accesses, edits, and verification actions are audited.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN APPLICATION (Hidden until authenticated) -->
+  <div id="app-layout" class="app-container" style="display: none;">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🆘</div>
+        <div class="sidebar-title">
+          <h3>BM 24 HS</h3>
+          <span class="badge badge-danger">ADMIN OPS</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-view="dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-btn" data-view="directory">
+          <span class="nav-icon">📖</span> Directory Contacts
+        </button>
+        <button class="nav-btn" data-view="review-queue">
+          <span class="nav-icon">⏳</span> Review Queue <span class="badge badge-warning ml-auto" id="badge-review-count">0</span>
+        </button>
+        <button class="nav-btn" data-view="add-contact">
+          <span class="nav-icon">➕</span> Add Contact
+        </button>
+        <button class="nav-btn" data-view="import-export">
+          <span class="nav-icon">📁</span> Import / Export
+        </button>
+        <button class="nav-btn" data-view="audit-log">
+          <span class="nav-icon">🛡️</span> Audit Log
+        </button>
+        <button class="nav-btn" data-view="settings">
+          <span class="nav-icon">⚙️</span> Settings & Sync
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar">AD</div>
+          <div class="user-info">
+            <span class="user-name" id="display-admin-email">Admin</span>
+            <span class="user-role">Super Admin</span>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger btn-sm btn-block mt-2" id="btn-logout">
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+      <!-- TOP NAVIGATION BAR -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <h2 id="view-title">Operations Dashboard</h2>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-quick-add" onclick="switchView('add-contact')">
+            + New Emergency Contact
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-publish-sync">
+            ☁️ Publish & Export Directory
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW: DASHBOARD -->
+      <section id="view-dashboard" class="content-view active">
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary-soft">📋</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-total">0</div>
+              <div class="stat-label">Total Contacts</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-success-soft">✅</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-active">0</div>
+              <div class="stat-label">Active Contacts</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-info-soft">🛡️</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-verified">0</div>
+              <div class="stat-label">Verified Contacts</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-warning-soft">⚠️</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-needs-review">0</div>
+              <div class="stat-label">Needs Review</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-danger-soft">⏰</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-expired">0</div>
+              <div class="stat-label">Expired Contacts</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-dark-soft">🚫</div>
+            <div class="stat-content">
+              <div class="stat-number" id="stat-inactive">0</div>
+              <div class="stat-label">Inactive Contacts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS & SUMMARY SECTION -->
+        <div class="grid-2-col mt-4">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Contacts by Category</h3>
+            </div>
+            <div class="panel-body">
+              <div id="category-chart" class="chart-bars">
+                <!-- Dynamically generated bars -->
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Publishing Health & Quality</h3>
+            </div>
+            <div class="panel-body">
+              <div class="health-metrics">
+                <div class="health-item">
+                  <span class="health-label">Official HTTPS Sources</span>
+                  <span class="health-value text-success" id="metric-https">100%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill bg-success" style="width: 100%;"></div>
+                </div>
+
+                <div class="health-item mt-3">
+                  <span class="health-label">Valid Phone Format</span>
+                  <span class="health-value text-success" id="metric-phones">100%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill bg-success" style="width: 100%;"></div>
+                </div>
+
+                <div class="health-item mt-3">
+                  <span class="health-label">Active & Unexpired</span>
+                  <span class="health-value text-info" id="metric-unexpired">100%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill bg-info" id="progress-unexpired" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITY PANELS -->
+        <div class="grid-2-col mt-4">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Recently Added Contacts</h3>
+            </div>
+            <div class="panel-body">
+              <ul class="activity-list" id="recent-added-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Recent Audit Log Events</h3>
+            </div>
+            <div class="panel-body">
+              <ul class="activity-list" id="recent-audit-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: DIRECTORY -->
+      <section id="view-directory" class="content-view">
+        <div class="panel">
+          <div class="panel-header flex-between">
+            <div class="search-filter-group">
+              <input type="text" id="dir-search-input" class="form-control" placeholder="Search by name, district, category, phone...">
+              <select id="dir-category-filter" class="form-control">
+                <option value="All">All Categories</option>
+              </select>
+              <select id="dir-status-filter" class="form-control">
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Draft">Draft</option>
+                <option value="Needs Review">Needs Review</option>
+                <option value="Verified">Verified</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Expired">Expired</option>
+              </select>
+            </div>
+            <span class="text-muted" id="dir-count-display">Showing 0 contacts</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table" id="directory-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Service Name</th>
+                  <th>Category</th>
+                  <th>Location</th>
+                  <th>Primary Phone</th>
+                  <th>Source</th>
+                  <th>Verified</th>
+                  <th>Review Due</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="directory-tbody">
+                <!-- Populated via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: REVIEW QUEUE -->
+      <section id="view-review-queue" class="content-view">
+        <div class="alert alert-warning mb-3">
+          <strong>Review Queue Protocol:</strong> Contacts requiring periodic re-verification, missing sources, expiring soon, or with expired review dates are quarantined here. Verify official source before re-activating.
+        </div>
+        <div class="panel">
+          <div class="panel-header flex-between">
+            <h3>Quarantine & Review Queue</h3>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline active" onclick="filterReviewQueue('all')">All Issues</button>
+              <button class="btn btn-sm btn-outline" onclick="filterReviewQueue('expired')">Expired</button>
+              <button class="btn btn-sm btn-outline" onclick="filterReviewQueue('needs-review')">Needs Review</button>
+              <button class="btn btn-sm btn-outline" onclick="filterReviewQueue('unverified')">Unverified</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Issue Reason</th>
+                  <th>Phone</th>
+                  <th>Current Review Due</th>
+                  <th>Source URL</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="review-queue-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: ADD / EDIT CONTACT -->
+      <section id="view-add-contact" class="content-view">
+        <div class="panel">
+          <div class="panel-header">
+            <h3 id="form-contact-title">Add Emergency Directory Contact</h3>
+            <p class="text-muted text-xs">Strict validation: Phone must be valid, Source URL must be HTTPS, Review Due cannot be past.</p>
+          </div>
+          <div class="panel-body">
+            <form id="contact-form">
+              <input type="hidden" id="edit-mode-id" value="">
+
+              <div class="form-row">
+                <div class="form-group col-4">
+                  <label for="input-id">ID *</label>
+                  <input type="text" id="input-id" class="form-control" required placeholder="e.g. POL-COB-010">
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-category">Category *</label>
+                  <select id="input-category" class="form-control" required>
+                    <option value="Emergency">Emergency</option>
+                    <option value="Police">Police</option>
+                    <option value="Fire">Fire</option>
+                    <option value="Ambulance">Ambulance</option>
+                    <option value="Hospital">Hospital</option>
+                    <option value="Women">Women</option>
+                    <option value="Child">Child</option>
+                    <option value="Cyber Crime">Cyber Crime</option>
+                    <option value="Disaster">Disaster</option>
+                    <option value="Railway">Railway</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Water">Water</option>
+                    <option value="Blood Bank">Blood Bank</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-status">Publishing Status *</label>
+                  <select id="input-status" class="form-control" required>
+                    <option value="Draft">Draft</option>
+                    <option value="Needs Review">Needs Review</option>
+                    <option value="Verified">Verified (Staging)</option>
+                    <option value="Active">Active (Public)</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Expired">Expired</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-name">Service / Facility Name *</label>
+                <input type="text" id="input-name" class="form-control" required placeholder="e.g. Cooch Behar Kotwali Police Station">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label for="input-phone-primary">Primary Phone (Dialer target) *</label>
+                  <input type="text" id="input-phone-primary" class="form-control" required placeholder="e.g. 03582227005 or 112">
+                  <small class="text-muted">Must be a valid emergency or landline/mobile number.</small>
+                </div>
+                <div class="form-group col-6">
+                  <label for="input-phone-alternate">Alternate Phone (Optional)</label>
+                  <input type="text" id="input-phone-alternate" class="form-control" placeholder="e.g. 100">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-4">
+                  <label for="input-state">State *</label>
+                  <input type="text" id="input-state" class="form-control" required value="West Bengal">
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-district">District *</label>
+                  <input type="text" id="input-district" class="form-control" required value="Cooch Behar">
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-block">Block / Town *</label>
+                  <input type="text" id="input-block" class="form-control" required placeholder="e.g. Cooch Behar Sadar">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-address">Physical Address</label>
+                <input type="text" id="input-address" class="form-control" placeholder="e.g. Police Line, Cooch Behar 736101">
+              </div>
+
+              <div class="form-group">
+                <label for="input-source-url">Official Source URL (Must begin with HTTPS) *</label>
+                <input type="url" id="input-source-url" class="form-control" required placeholder="https://coochbeharpolice.wb.gov.in/...">
+                <small class="text-muted">Only official government/hospital/civil defence HTTPS websites are accepted.</small>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-4">
+                  <label for="input-verified">Verified *</label>
+                  <select id="input-verified" class="form-control" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-verified-at">Verified Date *</label>
+                  <input type="date" id="input-verified-at" class="form-control" required>
+                </div>
+                <div class="form-group col-4">
+                  <label for="input-review-due">Review Due Date *</label>
+                  <input type="date" id="input-review-due" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-notes">Operational Verification Notes</label>
+                <textarea id="input-notes" class="form-control" rows="2" placeholder="Verified against official departmental telephone directory."></textarea>
+              </div>
+
+              <div id="form-error-alert" class="alert alert-danger" style="display: none;"></div>
+
+              <div class="form-actions mt-3">
+                <button type="submit" class="btn btn-primary" id="btn-save-contact">Save & Validate Contact</button>
+                <button type="button" class="btn btn-secondary" onclick="resetContactForm()">Clear Form</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: IMPORT / EXPORT -->
+      <section id="view-import-export" class="content-view">
+        <div class="grid-2-col">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Export Directory Data</h3>
+            </div>
+            <div class="panel-body">
+              <p>Export all contacts or only published active verified records for disaster relief agencies, backup, or Play Store sync.</p>
+              <div class="mt-3">
+                <button class="btn btn-primary" onclick="exportData('csv')">📥 Export CSV Backup</button>
+                <button class="btn btn-info ml-2" onclick="exportData('json')">📦 Export JSON (Mobile App Format)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Import CSV Data</h3>
+            </div>
+            <div class="panel-body">
+              <p>Upload a CSV file containing directory updates. The validator will strictly verify all fields and reject invalid numbers, non-HTTPS URLs, or expired records.</p>
+              <div class="form-group mt-3">
+                <input type="file" id="csv-file-input" class="form-control" accept=".csv">
+              </div>
+              <button class="btn btn-warning" onclick="processCsvImport()">Validate & Import CSV</button>
+              <div id="import-report" class="mt-3" style="display: none;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: AUDIT LOG -->
+      <section id="view-audit-log" class="content-view">
+        <div class="panel">
+          <div class="panel-header flex-between">
+            <h3>Audit Log Records</h3>
+            <button class="btn btn-sm btn-outline-danger" onclick="clearAuditLogs()">Clear Log (Admin)</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Admin</th>
+                  <th>Action</th>
+                  <th>Record ID</th>
+                  <th>Previous Value</th>
+                  <th>New Value</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: SETTINGS & GOOGLE SHEETS SYNC -->
+      <section id="view-settings" class="content-view">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Google Sheets & Cloud Database Synchronization</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>Google Sheets Published CSV URL (Optional Sync Source)</label>
+              <input type="url" id="setting-sheets-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv">
+              <small class="text-muted">Allows syncing directory entries directly from a verified administrative Google Sheet.</small>
+            </div>
+            <button class="btn btn-secondary" onclick="syncWithGoogleSheets()">Sync Now from Google Sheets</button>
+            <hr class="my-4">
+            <h4>Administrative Support & Contact Channels</h4>
+            <p class="text-sm mt-2">
+              • <strong>WhatsApp Support:</strong> <a href="https://wa.me/919144844323" target="_blank" class="text-success">+91 9144844323</a><br>
+              • <strong>Instagram Handle:</strong> <a href="https://instagram.com/bakul_king_10k" target="_blank" class="text-info">@bakul_king_10k</a><br>
+              • <strong>Operations Desk:</strong> support@bmemergency.org
+            </p>
+            <hr class="my-4">
+            <h4>Security Policies</h4>
+            <p class="text-muted text-sm">
+              • Public API access is strictly READ-ONLY.<br>
+              • Unverified, Draft, or Expired contacts are NEVER broadcast to the public mobile app.<br>
+              • All admin actions generate immutable audit records.<br>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
